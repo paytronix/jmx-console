@@ -79,6 +79,16 @@ public class Server {
                 if (omittedDomains.contains(name.getDomain())) {
                     continue;
                 }
+
+                // Skip when it's a JBoss mbean with service=management-service active-operation MBeans, as they appear to often not exist when we go to call getMBeanInfo() for them
+                String domain = name.getDomain();
+                if (domain.equals("jboss.as") || domain.equals("jboss.as.expr")) {
+                    String service = name.getKeyProperty("service");
+                    if (service != null && service.equals("management-operations") && name.getKeyProperty("active-operation") != null) {
+                        continue;
+                    }
+                }
+
                 MBeanInfo info = server.getMBeanInfo(name);
                 String domainName = name.getDomain();
                 MBeanData mbeanData = new MBeanData(name, info);
